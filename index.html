@@ -401,6 +401,7 @@ tr:hover td{background:rgba(0,255,136,.03)}
         <div class="dash-stat"><div class="dash-stat-val pink" id="sys-links">0</div><div class="dash-stat-label">TOTAL LINKS</div></div>
         <div class="dash-stat"><div class="dash-stat-val cyan" id="sys-clicks">0</div><div class="dash-stat-label">TOTAL CLICKS</div></div>
         <div class="dash-stat"><div class="dash-stat-val" id="sys-storage">0 KB</div><div class="dash-stat-label">STORAGE USED</div></div>
+        <div class="dash-stat"><div class="dash-stat-val pink" id="sys-bots">0</div><div class="dash-stat-label">BOT CLICKS</div></div>
       </div>
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <button class="cyber-btn pink" onclick="if(confirm('WIPE ALL CLICK DATA?'))clearClicks()">[ CLEAR CLICK LOG ]</button>
@@ -520,6 +521,70 @@ tr:hover td{background:rgba(0,255,136,.03)}
 </div>
 
 <script>
+// ────────── CONFIG ──────────────────────────────────────────────
+const API_BASE = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('shrinkr_token') || null;
+let USER = null;
+
+// ────────── BOT DETECTION CLIENT-SIDE ──────────────────────────
+const BotDetector = {
+  mouseEvents: 0,
+  keyboardEvents: 0,
+  touchEvents: 0,
+  startTime: Date.now(),
+  
+  init() {
+    document.addEventListener('mousemove', () => this.mouseEvents++);
+    document.addEventListener('click', () => this.mouseEvents++);
+    document.addEventListener('keydown', () => this.keyboardEvents++);
+    document.addEventListener('touchstart', () => this.touchEvents++);
+  },
+  
+  getSignals() {
+    return {
+      mouseEvents: this.mouseEvents,
+      keyboardEvents: this.keyboardEvents,
+      touchEvents: this.touchEvents,
+      timeOnPage: Date.now() - this.startTime,
+      webdriver: navigator.webdriver || false,
+      cookiesEnabled: navigator.cookieEnabled,
+      localStorageEnabled: (() => { try { return !!localStorage; } catch { return false; } })(),
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      plugins: navigator.plugins?.length || 0,
+      languages: navigator.languages?.join(',') || navigator.language,
+    };
+  },
+  
+  getHeaders() {
+    return {
+      'X-Client-Signals': btoa(JSON.stringify(this.getSignals())),
+      'X-Request-Time': Date.now() - this.startTime,
+    };
+  }
+};
+
+BotDetector.init();
+
+// ────────── API HELPERS ──────────────────────────────────────────
+async function apiCall(endpoint, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...BotDetector.getHeaders() };
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  
+  const res = await fetch(API_BASE + endpoint, {
+    ...options,
+    headers: { ...headers, ...options.headers },
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(err.error || 'Request failed');
+  }
+  
+  return res.json();
+}
+
 // ────────── CURSOR ──────────────────────────────────────────────
 const cursor = document.getElementById('cursor');
 const trail = document.getElementById('cursor-trail');
@@ -545,103 +610,17 @@ for(let i=0;i<35;i++){
   pContainer.appendChild(p);
 }
 
-// ────────── STORAGE HELPERS ──────────────────────────────────────
-const DB = {
-  get:(k)=>{try{return JSON.parse(localStorage.getItem(k))||null}catch{return null}},
-  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
-  getUsers:()=>DB.get('shrinkr_users')||[],
-  setUsers:(u)=>DB.set('shrinkr_users',u),
-  getLinks:()=>DB.get('shrinkr_links')||[],
-  setLinks:(l)=>DB.set('shrinkr_links',l),
-  getClicks:()=>DB.get('shrinkr_clicks')||[],
-  setClicks:(c)=>DB.set('shrinkr_clicks',c),
-  getSession:()=>DB.get('shrinkr_session'),
-  setSession:(s)=>DB.set('shrinkr_session',s),
-  clearSession:()=>localStorage.removeItem('shrinkr_session')
-};
-
-// ────────── INIT DATA ────────────────────────────────────────────
-function initData(){
-  let users=DB.getUsers();
-  if(!users.find(u=>u.username==='admin')){
-    users.push({id:'u0',username:'admin',email:'admin@shrinkr.sys',password:hashPass('admin123'),role:'admin',created:Date.now()});
-    DB.setUsers(users);
-  }
-  // Seed demo data
-  let links=DB.getLinks();
-  if(links.length===0){
-    const demoLinks=[
-      {id:'l1',userId:'u0',slug:'gh-profile',original:'https://github.com/nexusdev',title:'GitHub Profile',created:Date.now()-86400000*7,active:true},
-      {id:'l2',userId:'u0',slug:'portfolio',original:'https://bonz.portfolio.dev/home',title:'Portfolio Site',created:Date.now()-86400000*3,active:true},
-    ];
-    DB.setLinks(demoLinks);
-    const demoClicks=generateDemoClicks(demoLinks);
-    DB.setClicks(demoClicks);
-  }
-}
-
-function generateDemoClicks(links){
-  const countries=[['Indonesia','ID','🇮🇩','Jakarta'],['United States','US','🇺🇸','New York'],['Germany','DE','🇩🇪','Berlin'],['Singapore','SG','🇸🇬','Singapore'],['Japan','JP','🇯🇵','Tokyo'],['United Kingdom','GB','🇬🇧','London']];
-  const devices=['Desktop','Mobile','Tablet'];
-  const browsers=['Chrome','Firefox','Safari','Edge','Brave'];
-  const oses=['Windows 11','macOS 14','Ubuntu 22.04','iOS 17','Android 14'];
-  const ips=['103.78.22.','45.91.201.','2.56.168.','119.17.88.','154.92.7.','77.111.244.'];
-  const clicks=[];
-  links.forEach(link=>{
-    const n=Math.floor(Math.random()*60+20);
-    for(let i=0;i<n;i++){
-      const c=countries[Math.floor(Math.random()*countries.length)];
-      const dev=devices[Math.floor(Math.random()*devices.length)];
-      const br=browsers[Math.floor(Math.random()*browsers.length)];
-      const os=oses[Math.floor(Math.random()*oses.length)];
-      const ip=ips[Math.floor(Math.random()*ips.length)]+(Math.floor(Math.random()*200+10));
-      clicks.push({
-        id:'c'+Math.random().toString(36).slice(2),
-        linkId:link.id,linkSlug:link.slug,userId:link.userId,
-        ip,country:c[0],countryCode:c[1],flag:c[2],city:c[3],
-        isp:'AS'+Math.floor(Math.random()*9000+1000)+' Telecom Co',
-        device:dev,browser:br,os,
-        referrer:Math.random()>.6?'https://t.co/x':'direct',
-        ua:`Mozilla/5.0 (${os}) ${br}/1${Math.floor(Math.random()*8)+14}.0`,
-        ts:Date.now()-Math.floor(Math.random()*86400000*30)
-      });
-    }
-  });
-  return clicks.sort((a,b)=>b.ts-a.ts);
-}
-
-function hashPass(p){
-  // Simple deterministic hash (demo only - not cryptographic)
-  let hash=0;
-  for(let i=0;i<p.length;i++){hash=(Math.imul(31,hash)+p.charCodeAt(i))|0}
-  return hash.toString(16);
-}
-
 // ────────── SESSION ─────────────────────────────────────────────
-let currentUser=null;
-
-function initSession(){
-  const sess=DB.getSession();
-  if(sess){
-    const users=DB.getUsers();
-    currentUser=users.find(u=>u.id===sess.userId)||null;
-    if(currentUser) updateNav();
+async function initSession(){
+  if(!TOKEN){updateNav();updateLandingStats();return;}
+  try{
+    USER=await apiCall('/auth/me');
+    updateNav();
+    updateLandingStats();
+  }catch{
+    TOKEN=null;localStorage.removeItem('shrinkr_token');
+    updateNav();updateLandingStats();
   }
-  updateLandingStats();
-}
-
-function updateNav(){
-  const loggedIn=!!currentUser;
-  document.getElementById('btn-login').style.display=loggedIn?'none':'';
-  document.getElementById('btn-register').style.display=loggedIn?'none':'';
-  document.getElementById('btn-logout').style.display=loggedIn?'':'none';
-  document.getElementById('nav-dash').style.display=loggedIn?'':'none';
-  document.getElementById('nav-admin').style.display=(loggedIn&&currentUser.role==='admin')?'':'none';
-}
-
-function logout(){
-  DB.clearSession();currentUser=null;
-  updateNav();showPage('landing');toast('LOGGED OUT SUCCESSFULLY');
 }
 
 // ────────── PAGES ────────────────────────────────────────────────
@@ -649,11 +628,11 @@ function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   if(name==='dashboard'){
-    if(!currentUser){showModal('login');showPage('landing');return;}
+    if(!USER){showModal('login');showPage('landing');return;}
     renderDashboard();
   }
   if(name==='admin'){
-    if(!currentUser||currentUser.role!=='admin'){toast('ACCESS DENIED: ADMIN ONLY','err');showPage('landing');return;}
+    if(!USER||USER.role!=='admin'){toast('ACCESS DENIED: ADMIN ONLY','err');showPage('landing');return;}
     renderAdmin();
   }
   if(name==='landing') updateLandingStats();
@@ -670,24 +649,41 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
   m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
 });
 
+function updateNav(){
+  const loggedIn=!!USER;
+  document.getElementById('btn-login').style.display=loggedIn?'none':'';
+  document.getElementById('btn-register').style.display=loggedIn?'none':'';
+  document.getElementById('btn-logout').style.display=loggedIn?'':'none';
+  document.getElementById('nav-dash').style.display=loggedIn?'':'none';
+  document.getElementById('nav-admin').style.display=(loggedIn&&USER.role==='admin')?'':'none';
+}
+
+function logout(){
+  TOKEN=null;USER=null;
+  localStorage.removeItem('shrinkr_token');
+  updateNav();showPage('landing');toast('LOGGED OUT SUCCESSFULLY');
+}
+
 // ────────── AUTH ─────────────────────────────────────────────────
-function doLogin(){
+async function doLogin(){
   const ident=document.getElementById('login-user').value.trim();
   const pass=document.getElementById('login-pass').value;
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
   if(!ident||!pass){errEl.textContent='ERROR: All fields required.';errEl.style.display='';return;}
-  const users=DB.getUsers();
-  const user=users.find(u=>(u.username===ident||u.email===ident)&&u.password===hashPass(pass));
-  if(!user){errEl.textContent='ERROR: Invalid credentials. Access denied.';errEl.style.display='';return;}
-  currentUser=user;
-  DB.setSession({userId:user.id,ts:Date.now()});
-  updateNav();closeModal('login');
-  toast('ACCESS GRANTED // WELCOME '+user.username.toUpperCase());
-  showPage('dashboard');
+  try{
+    const data=await apiCall('/auth/login',{method:'POST',body:JSON.stringify({username:ident,password:pass})});
+    TOKEN=data.token;USER=data.user;
+    localStorage.setItem('shrinkr_token',TOKEN);
+    updateNav();closeModal('login');
+    toast('ACCESS GRANTED // WELCOME '+USER.username.toUpperCase());
+    showPage('dashboard');
+  }catch(e){
+    errEl.textContent='ERROR: '+e.message;errEl.style.display='';
+  }
 }
 
-function doRegister(){
+async function doRegister(){
   const username=document.getElementById('reg-user').value.trim();
   const email=document.getElementById('reg-email').value.trim();
   const pass=document.getElementById('reg-pass').value;
@@ -697,39 +693,29 @@ function doRegister(){
   errEl.style.display='none';okEl.style.display='none';
   if(!username||!email||!pass||!pass2){errEl.textContent='ERROR: All fields required.';errEl.style.display='';return;}
   if(pass!==pass2){errEl.textContent='ERROR: Passwords do not match.';errEl.style.display='';return;}
-  if(pass.length<6){errEl.textContent='ERROR: Password too short (min 6 chars).';errEl.style.display='';return;}
-  if(!/^[a-zA-Z0-9_]+$/.test(username)){errEl.textContent='ERROR: Username: alphanumeric and underscore only.';errEl.style.display='';return;}
-  const users=DB.getUsers();
-  if(users.find(u=>u.username===username)){errEl.textContent='ERROR: Username already exists.';errEl.style.display='';return;}
-  if(users.find(u=>u.email===email)){errEl.textContent='ERROR: Email already registered.';errEl.style.display='';return;}
-  const newUser={id:'u'+Date.now(),username,email,password:hashPass(pass),role:'user',created:Date.now()};
-  users.push(newUser);DB.setUsers(users);
-  okEl.textContent='SUCCESS: Account created. Logging you in...';okEl.style.display='';
-  setTimeout(()=>{
-    currentUser=newUser;DB.setSession({userId:newUser.id,ts:Date.now()});
-    updateNav();closeModal('register');toast('WELCOME TO THE GRID, '+username.toUpperCase());
-    showPage('dashboard');
-  },1000);
+  try{
+    await apiCall('/auth/register',{method:'POST',body:JSON.stringify({username,email,password:pass})});
+    okEl.textContent='SUCCESS: Account created. Logging you in...';okEl.style.display='';
+    setTimeout(()=>doLogin(),800);
+    document.getElementById('login-user').value=username;
+    document.getElementById('login-pass').value=pass;
+  }catch(e){
+    errEl.textContent='ERROR: '+e.message;errEl.style.display='';
+  }
 }
-
 // ────────── LANDING QUICK SHORTEN ───────────────────────────────
-function quickShorten(){
+async function quickShorten(){
   const url=document.getElementById('landing-url').value.trim();
   if(!url){toast('ERROR: Enter a URL','err');return;}
   try{new URL(url)}catch{toast('ERROR: Invalid URL format','err');return;}
-  const slug=generateSlug();
-  const base=window.location.origin+window.location.pathname.replace('index.html','');
-  const short=base+'r/'+slug;
-  if(currentUser){
-    const links=DB.getLinks();
-    links.push({id:'l'+Date.now(),userId:currentUser.id,slug,original:url,title:'',created:Date.now(),active:true});
-    DB.setLinks(links);
-    renderDashboard();
-  }
-  const resBox=document.getElementById('landing-result');
-  document.getElementById('landing-result-url').textContent=short;
-  resBox.classList.add('show');
-  resBox.dataset.url=short;
+  try{
+    const data=await apiCall('/links/quick',{method:'POST',body:JSON.stringify({original_url:url})});
+    const resBox=document.getElementById('landing-result');
+    document.getElementById('landing-result-url').textContent=data.short_url;
+    resBox.classList.add('show');
+    resBox.dataset.url=data.short_url;
+    updateLandingStats();
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
 function copyResult(){
@@ -737,18 +723,13 @@ function copyResult(){
   navigator.clipboard.writeText(url).then(()=>toast('COPIED TO CLIPBOARD'));
 }
 
-function generateSlug(){
-  const chars='abcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-}
-
-function updateLandingStats(){
-  const links=DB.getLinks();
-  const clicks=DB.getClicks();
-  const users=DB.getUsers();
-  animCount('stat-links',links.length);
-  animCount('stat-clicks',clicks.length);
-  animCount('stat-users',users.filter(u=>u.role!=='admin').length);
+async function updateLandingStats(){
+  try{
+    const data=await fetch('/api/stats').then(r=>r.json());
+    animCount('stat-links',data.links||0);
+    animCount('stat-clicks',data.clicks||0);
+    animCount('stat-users',data.users||0);
+  }catch{}
 }
 
 function animCount(id,target){
@@ -762,48 +743,52 @@ function animCount(id,target){
 }
 
 // ────────── DASHBOARD ────────────────────────────────────────────
-function renderDashboard(){
-  if(!currentUser)return;
-  document.getElementById('dash-username-label').textContent='// '+currentUser.username.toUpperCase();
-  const allLinks=DB.getLinks();
-  const myLinks=currentUser.role==='admin'?allLinks:allLinks.filter(l=>l.userId===currentUser.id);
-  const allClicks=DB.getClicks();
-  const myClicks=allClicks.filter(c=>myLinks.find(l=>l.id===c.linkId));
-  const today=new Date().toDateString();
-  const todayClicks=myClicks.filter(c=>new Date(c.ts).toDateString()===today);
+let allLinksCache=[];
 
-  document.getElementById('ds-total-links').textContent=myLinks.length;
-  document.getElementById('ds-total-clicks').textContent=myClicks.length;
-  document.getElementById('ds-active-links').textContent=myLinks.filter(l=>l.active).length;
-  document.getElementById('ds-today-clicks').textContent=todayClicks.length;
-
-  renderLinksTable(myLinks,myClicks,'links-tbody','links-empty');
+async function renderDashboard(){
+  if(!USER)return;
+  document.getElementById('dash-username-label').textContent='// '+USER.username.toUpperCase();
+  try{
+    const links=await apiCall('/links');
+    allLinksCache=links;
+    const totalClicks=links.reduce((s,l)=>s+(l.total_clicks||0),0);
+    const todayClicks=links.reduce((s,l)=>s+(l.today_clicks||0),0);
+    document.getElementById('ds-total-links').textContent=links.length;
+    document.getElementById('ds-total-clicks').textContent=totalClicks;
+    document.getElementById('ds-active-links').textContent=links.filter(l=>l.is_active).length;
+    document.getElementById('ds-today-clicks').textContent=todayClicks;
+    renderLinksTable(links,'links-tbody','links-empty');
+  }catch(e){toast('ERROR loading links: '+e.message,'err');}
+}
 }
 
-function renderLinksTable(links,allClicks,tbodyId,emptyId){
+function renderLinksTable(links,tbodyId,emptyId){
   const tbody=document.getElementById(tbodyId);
   const emptyEl=document.getElementById(emptyId);
   tbody.innerHTML='';
-  const base=window.location.origin+window.location.pathname.replace('index.html','');
   if(!links.length){if(emptyEl)emptyEl.style.display='';tbody.style.display='none';return;}
   if(emptyEl)emptyEl.style.display='none';
   tbody.style.display='';
-  links.sort((a,b)=>b.created-a.created).forEach(link=>{
-    const clicks=allClicks.filter(c=>c.linkId===link.id);
-    const shortUrl=base+'r/'+link.slug;
+  links.forEach(link=>{
+    const shortUrl=link.short_url||`${window.location.origin}/r/${link.slug}`;
+    const botPct=link.total_clicks>0?Math.round((link.bot_clicks||0)/link.total_clicks*100):0;
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td><span class="link-short">${shortUrl.replace(window.location.origin,'')}</span></td>
-      <td><span class="link-original" title="${link.original}">${link.original}</span></td>
-      <td><span class="click-badge">${clicks.length}</span></td>
-      <td style="color:var(--dim);font-size:.65rem">${fmtDate(link.created)}</td>
-      <td><span class="${link.active?'status-active':'status-inactive'}">${link.active?'● ACTIVE':'○ OFF'}</span></td>
+      <td><span class="link-short">/r/${link.slug}</span></td>
+      <td><span class="link-original" title="${link.original_url}">${link.original_url}</span></td>
+      <td>
+        <span class="click-badge">${link.total_clicks||0}</span>
+        ${link.bot_clicks>0?`<span style="color:var(--pink);font-size:.55rem;margin-left:.3rem">🤖${link.bot_clicks}</span>`:''}
+        ${link.human_clicks>0?`<span style="color:var(--green);font-size:.55rem;margin-left:.2rem">👤${link.human_clicks}</span>`:''}
+      </td>
+      <td style="color:var(--dim);font-size:.65rem">${fmtDate(link.created_at)}</td>
+      <td><span class="${link.is_active?'status-active':'status-inactive'}">${link.is_active?'● ACTIVE':'○ OFF'}</span></td>
       <td>
         <div class="action-btns">
-          <button class="action-btn view" onclick="showAnalytics('${link.id}')">STATS</button>
-          <button class="action-btn toggle" onclick="toggleLink('${link.id}')">TOGGLE</button>
+          <button class="action-btn view" onclick="showAnalytics(${link.id})">STATS</button>
+          <button class="action-btn toggle" onclick="toggleLink(${link.id})">TOGGLE</button>
           <button class="action-btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="copyShort('${shortUrl}')">COPY</button>
-          <button class="action-btn del" onclick="deleteLink('${link.id}')">DEL</button>
+          <button class="action-btn del" onclick="deleteLink(${link.id})">DEL</button>
         </div>
       </td>`;
     tbody.appendChild(tr);
@@ -811,105 +796,90 @@ function renderLinksTable(links,allClicks,tbodyId,emptyId){
 }
 
 function filterLinks(q){
-  const allLinks=DB.getLinks();
-  const myLinks=currentUser.role==='admin'?allLinks:allLinks.filter(l=>l.userId===currentUser.id);
-  const allClicks=DB.getClicks();
-  const filtered=myLinks.filter(l=>l.slug.includes(q)||l.original.includes(q)||(l.title||'').includes(q));
-  renderLinksTable(filtered,allClicks,'links-tbody','links-empty');
+  const filtered=allLinksCache.filter(l=>l.slug.includes(q)||l.original_url.includes(q)||(l.title||'').includes(q));
+  renderLinksTable(filtered,'links-tbody','links-empty');
 }
 
 function copyShort(url){
   navigator.clipboard.writeText(url).then(()=>toast('COPIED: '+url));
 }
 
-function toggleLink(id){
-  const links=DB.getLinks();
-  const l=links.find(x=>x.id===id);
-  if(l){l.active=!l.active;DB.setLinks(links);renderDashboard();toast('LINK '+(l.active?'ACTIVATED':'DEACTIVATED'));}
+async function toggleLink(id){
+  try{
+    await apiCall('/links/'+id+'/toggle',{method:'PATCH'});
+    renderDashboard();toast('LINK STATUS UPDATED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
-function deleteLink(id){
+async function deleteLink(id){
   if(!confirm('DELETE THIS LINK? This cannot be undone.'))return;
-  let links=DB.getLinks();links=links.filter(l=>l.id!==id);DB.setLinks(links);
-  let clicks=DB.getClicks();clicks=clicks.filter(c=>c.linkId!==id);DB.setClicks(clicks);
-  renderDashboard();toast('LINK DELETED','err');
+  try{
+    await apiCall('/links/'+id,{method:'DELETE'});
+    renderDashboard();toast('LINK DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
 // ────────── CREATE LINK ──────────────────────────────────────────
-function createLink(){
+async function createLink(){
   const url=document.getElementById('nl-url').value.trim();
-  const slugInput=document.getElementById('nl-slug').value.trim().replace(/[^a-z0-9\-]/gi,'');
+  const slug=document.getElementById('nl-slug').value.trim();
   const title=document.getElementById('nl-title').value.trim();
   if(!url){toast('ERROR: URL required','err');return;}
   try{new URL(url)}catch{toast('ERROR: Invalid URL','err');return;}
-  const links=DB.getLinks();
-  let slug=slugInput||generateSlug();
-  if(links.find(l=>l.slug===slug)){slug=generateSlug();}
-  links.push({id:'l'+Date.now(),userId:currentUser.id,slug,original:url,title,created:Date.now(),active:true});
-  DB.setLinks(links);
-  document.getElementById('nl-url').value='';document.getElementById('nl-slug').value='';document.getElementById('nl-title').value='';
-  closeModal('newlink');
-  renderDashboard();
-  const base=window.location.origin+window.location.pathname.replace('index.html','');
-  toast('LINK CREATED: '+base+'r/'+slug);
+  try{
+    const data=await apiCall('/links',{method:'POST',body:JSON.stringify({original_url:url,slug:slug||undefined,title:title||undefined})});
+    document.getElementById('nl-url').value='';document.getElementById('nl-slug').value='';document.getElementById('nl-title').value='';
+    closeModal('newlink');
+    renderDashboard();
+    toast('LINK CREATED: '+data.short_url);
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
 // ────────── ANALYTICS ────────────────────────────────────────────
-function showAnalytics(linkId){
-  const links=DB.getLinks();
-  const link=links.find(l=>l.id===linkId);
-  if(!link)return;
-  const allClicks=DB.getClicks();
-  const clicks=allClicks.filter(c=>c.linkId===linkId);
-  const base=window.location.origin+window.location.pathname.replace('index.html','');
+async function showAnalytics(linkId){
+  try{
+    const data=await apiCall('/links/'+linkId+'/analytics');
+    const {link,stats,topCountries,topBrowsers,topOS,devices,byHour,topReferrers,recentClicks}=data;
 
-  document.getElementById('analytics-title').textContent='// ANALYTICS: '+link.slug.toUpperCase();
-  document.getElementById('analytics-url').textContent=link.original;
+    document.getElementById('analytics-title').textContent='// ANALYTICS: '+link.slug.toUpperCase();
+    document.getElementById('analytics-url').textContent=link.original_url;
 
-  // Metrics
-  const today=new Date().toDateString();
-  const todayC=clicks.filter(c=>new Date(c.ts).toDateString()===today).length;
-  const uniqueIPs=[...new Set(clicks.map(c=>c.ip))].length;
-  const mobileC=clicks.filter(c=>c.device==='Mobile').length;
-  document.getElementById('analytics-grid').innerHTML=`
-    <div class="a-stat"><div class="a-stat-val">${clicks.length}</div><div class="a-stat-label">TOTAL CLICKS</div></div>
-    <div class="a-stat"><div class="a-stat-val" style="color:var(--green)">${uniqueIPs}</div><div class="a-stat-label">UNIQUE IPs</div></div>
-    <div class="a-stat"><div class="a-stat-val" style="color:var(--pink)">${todayC}</div><div class="a-stat-label">TODAY</div></div>
-    <div class="a-stat"><div class="a-stat-val" style="color:var(--cyan)">${mobileC}</div><div class="a-stat-label">MOBILE CLICKS</div></div>`;
+    // Bot vs Human info
+    const botPct=stats.total>0?Math.round(stats.bots/stats.total*100):0;
+    document.getElementById('analytics-grid').innerHTML=`
+      <div class="a-stat"><div class="a-stat-val">${stats.total}</div><div class="a-stat-label">TOTAL CLICKS</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--green)">${stats.human}</div><div class="a-stat-label">👤 HUMAN</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--pink)">${stats.bots}</div><div class="a-stat-label">🤖 BOT (${botPct}%)</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--cyan)">${stats.unique_ips}</div><div class="a-stat-label">UNIQUE IPs</div></div>
+      <div class="a-stat"><div class="a-stat-val">${stats.today}</div><div class="a-stat-label">TODAY</div></div>`;
 
-  // Country chart
-  const countries=countGroup(clicks,'country');
-  renderBarChart('chart-countries',countries,10);
+    renderBarChart('chart-countries',topCountries,10);
+    renderBarChart('chart-devices',Object.entries(devices).sort((a,b)=>b[1]-a[1]),4,'pink');
+    renderBarChart('chart-browsers',topBrowsers,5);
 
-  // Device chart
-  const devices=countGroup(clicks,'device');
-  renderBarChart('chart-devices',devices,3,'pink');
-
-  // Browser
-  const browsers=countGroup(clicks,'browser');
-  renderBarChart('chart-browsers',browsers,5);
-
-  // Click log
-  const tbody=document.getElementById('click-log-tbody');
-  const emptyEl=document.getElementById('click-log-empty');
-  tbody.innerHTML='';
-  if(!clicks.length){emptyEl.style.display='';tbody.style.display='none';}
-  else{
-    emptyEl.style.display='none';tbody.style.display='';
-    clicks.slice(0,50).forEach(c=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td class="time-info">${fmtDateTime(c.ts)}</td>
-        <td class="ip-addr">${c.ip}</td>
-        <td><span class="flag">${c.flag}</span> <span class="loc-info">${c.city}, ${c.country}</span><br><span style="color:var(--dim);font-size:.58rem">${c.isp}</span></td>
-        <td class="device-info">${c.device}</td>
-        <td class="device-info">${c.browser}</td>
-        <td style="color:var(--dim);font-size:.65rem">${c.os}</td>
-        <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-  showModal('analytics');
+    // Click log
+    const tbody=document.getElementById('click-log-tbody');
+    const emptyEl=document.getElementById('click-log-empty');
+    tbody.innerHTML='';
+    if(!recentClicks.length){emptyEl.style.display='';tbody.style.display='none';}
+    else{
+      emptyEl.style.display='none';tbody.style.display='';
+      recentClicks.forEach(c=>{
+        const botBadge=c.is_bot?`<span style="color:var(--pink);font-size:.55rem"> 🤖BOT</span>`:`<span style="color:var(--green);font-size:.55rem"> 👤${Math.round(c.human_score||0)}%</span>`;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td class="time-info">${fmtDateTime(c.clicked_at)}</td>
+          <td class="ip-addr">${c.ip}${botBadge}</td>
+          <td><span class="loc-info">${c.city||'?'}, ${c.country||'?'}</span><br><span style="color:var(--dim);font-size:.58rem">${c.isp||''}</span></td>
+          <td class="device-info">${c.device||'?'}</td>
+          <td class="device-info">${c.browser||'?'}</td>
+          <td style="color:var(--dim);font-size:.65rem">${c.os||'?'}</td>
+          <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    showModal('analytics');
+  }catch(e){toast('ERROR loading analytics: '+e.message,'err');}
 }
 
 function countGroup(arr,key){
@@ -933,89 +903,90 @@ function renderBarChart(id,data,max,color=''){
 }
 
 // ────────── ADMIN ─────────────────────────────────────────────────
-function renderAdmin(){
-  renderAdminUsers();renderAdminLinks();renderAdminClicks();renderAdminSystem();
+async function renderAdmin(){
+  await Promise.all([renderAdminUsers(),renderAdminLinks(),renderAdminClicks(),renderAdminSystem()]);
 }
 
-function renderAdminUsers(){
-  const users=DB.getUsers();
-  const links=DB.getLinks();
-  const tbody=document.getElementById('admin-users-tbody');
-  tbody.innerHTML='';
-  users.forEach(u=>{
-    const uLinks=links.filter(l=>l.userId===u.id).length;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="color:var(--green)">${u.username}</td>
-      <td style="color:var(--dim)">${u.email}</td>
-      <td><span style="color:${u.role==='admin'?'var(--pink)':'var(--cyan)'}">[ ${u.role.toUpperCase()} ]</span></td>
-      <td><span class="click-badge">${uLinks}</span></td>
-      <td style="color:var(--dim);font-size:.65rem">${fmtDate(u.created)}</td>
-      <td>
-        <div class="action-btns">
-          ${u.id!=='u0'?`<button class="action-btn del" onclick="adminDeleteUser('${u.id}')">DEL</button>`:'<span style="font-size:.6rem;color:var(--dim)">ROOT</span>'}
-          ${u.id!=='u0'?`<button class="action-btn toggle" onclick="adminToggleRole('${u.id}')">${u.role==='admin'?'→USER':'→ADMIN'}</button>`:''}
-        </div>
-      </td>`;
-    tbody.appendChild(tr);
-  });
+async function renderAdminUsers(){
+  try{
+    const users=await apiCall('/admin/users');
+    const tbody=document.getElementById('admin-users-tbody');
+    tbody.innerHTML='';
+    users.forEach(u=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="color:var(--green)">${u.username}${u.is_banned?'<span style="color:var(--pink);font-size:.55rem"> [BANNED]</span>':''}</td>
+        <td style="color:var(--dim)">${u.email}</td>
+        <td><span style="color:${u.role==='admin'?'var(--pink)':'var(--cyan)'}">[ ${u.role.toUpperCase()} ]</span></td>
+        <td><span class="click-badge">${u.link_count||0}</span></td>
+        <td style="color:var(--dim);font-size:.65rem">${fmtDate(u.created_at)}</td>
+        <td>
+          <div class="action-btns">
+            ${u.role!=='admin'?`<button class="action-btn del" onclick="adminDeleteUser(${u.id})">DEL</button>`:'<span style="font-size:.6rem;color:var(--dim)">ROOT</span>'}
+            ${u.role!=='admin'?`<button class="action-btn toggle" onclick="adminBanUser(${u.id})">${u.is_banned?'UNBAN':'BAN'}</button>`:''}
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
 }
 
-function renderAdminLinks(){
-  const links=DB.getLinks();
-  const clicks=DB.getClicks();
-  const users=DB.getUsers();
-  const tbody=document.getElementById('admin-links-tbody');
-  tbody.innerHTML='';
-  links.sort((a,b)=>b.created-a.created).forEach(link=>{
-    const c=clicks.filter(x=>x.linkId===link.id).length;
-    const u=users.find(x=>x.id===link.userId);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td class="link-short">/${link.slug}</td>
-      <td><span class="link-original" title="${link.original}">${link.original}</span></td>
-      <td style="color:var(--cyan)">${u?u.username:'?'}</td>
-      <td><span class="click-badge">${c}</span></td>
-      <td><span class="${link.active?'status-active':'status-inactive'}">${link.active?'ACTIVE':'OFF'}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="action-btn view" onclick="showAnalytics('${link.id}')">STATS</button>
-          <button class="action-btn del" onclick="deleteLink('${link.id}');renderAdmin()">DEL</button>
-        </div>
-      </td>`;
-    tbody.appendChild(tr);
-  });
+async function renderAdminLinks(){
+  try{
+    const links=await apiCall('/admin/links');
+    const tbody=document.getElementById('admin-links-tbody');
+    tbody.innerHTML='';
+    links.forEach(link=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="link-short">/${link.slug}</td>
+        <td><span class="link-original" title="${link.original_url}">${link.original_url}</span></td>
+        <td style="color:var(--cyan)">${link.username||'anon'}</td>
+        <td><span class="click-badge">${link.total_clicks||0}</span>${link.bot_clicks>0?`<span style="color:var(--pink);font-size:.55rem"> 🤖${link.bot_clicks}</span>`:''}</td>
+        <td><span class="${link.is_active?'status-active':'status-inactive'}">${link.is_active?'ACTIVE':'OFF'}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" onclick="showAnalytics(${link.id})">STATS</button>
+            <button class="action-btn del" onclick="adminDeleteLink(${link.id})">DEL</button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
 }
 
-function renderAdminClicks(){
-  const clicks=DB.getClicks().slice(0,100);
-  const links=DB.getLinks();
-  const tbody=document.getElementById('admin-clicks-tbody');
-  tbody.innerHTML='';
-  clicks.forEach(c=>{
-    const link=links.find(l=>l.id===c.linkId);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td class="time-info">${fmtDateTime(c.ts)}</td>
-      <td class="link-short">/${c.linkSlug}</td>
-      <td class="ip-addr">${c.ip}</td>
-      <td><span class="flag">${c.flag}</span> ${c.city}, ${c.countryCode}</td>
-      <td class="device-info">${c.device}</td>
-      <td style="color:var(--cyan);font-size:.65rem">${c.browser}</td>
-      <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
-    tbody.appendChild(tr);
-  });
+async function renderAdminClicks(){
+  try{
+    const clicks=await apiCall('/admin/clicks');
+    const tbody=document.getElementById('admin-clicks-tbody');
+    tbody.innerHTML='';
+    clicks.slice(0,200).forEach(c=>{
+      const botBadge=c.is_bot?`<span style="color:var(--pink);font-size:.55rem"> 🤖</span>`:`<span style="color:var(--green);font-size:.55rem"> 👤</span>`;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="time-info">${fmtDateTime(c.clicked_at)}</td>
+        <td class="link-short">/${c.slug}</td>
+        <td class="ip-addr">${c.ip}${botBadge}</td>
+        <td>${c.city||'?'}, ${c.country||'?'}</td>
+        <td class="device-info">${c.device||'?'}</td>
+        <td style="color:var(--cyan);font-size:.65rem">${c.browser||'?'}</td>
+        <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
 }
 
-function renderAdminSystem(){
-  const users=DB.getUsers();
-  const links=DB.getLinks();
-  const clicks=DB.getClicks();
-  document.getElementById('sys-users').textContent=users.length;
-  document.getElementById('sys-links').textContent=links.length;
-  document.getElementById('sys-clicks').textContent=clicks.length;
-  const size=new Blob([JSON.stringify({users,links,clicks})]).size;
-  document.getElementById('sys-storage').textContent=(size/1024).toFixed(1)+' KB';
+async function renderAdminSystem(){
+  try{
+    const s=await apiCall('/admin/stats');
+    document.getElementById('sys-users').textContent=s.users;
+    document.getElementById('sys-links').textContent=s.links;
+    document.getElementById('sys-clicks').textContent=s.clicks;
+    document.getElementById('sys-storage').textContent='DB';
+    // Add bot stats if elements exist
+    const botEl=document.getElementById('sys-bots');
+    if(botEl)botEl.textContent=s.bots+' ('+Math.round(s.bots/(s.clicks||1)*100)+'%)';
+  }catch(e){console.error(e);}
 }
 
 function switchAdminTab(name){
@@ -1025,39 +996,60 @@ function switchAdminTab(name){
   document.getElementById('admin-'+name).classList.add('active');
 }
 
-function adminDeleteUser(id){
+async function adminDeleteUser(id){
   if(!confirm('DELETE USER AND ALL THEIR DATA?'))return;
-  let users=DB.getUsers();users=users.filter(u=>u.id!==id);DB.setUsers(users);
-  let links=DB.getLinks();const userLinks=links.filter(l=>l.userId===id).map(l=>l.id);
-  links=links.filter(l=>l.userId!==id);DB.setLinks(links);
-  let clicks=DB.getClicks();clicks=clicks.filter(c=>!userLinks.includes(c.linkId));DB.setClicks(clicks);
-  renderAdmin();toast('USER DELETED','err');
+  try{
+    await apiCall('/admin/users/'+id,{method:'DELETE'});
+    renderAdmin();toast('USER DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
-function adminToggleRole(id){
-  const users=DB.getUsers();
-  const u=users.find(x=>x.id===id);
-  if(u){u.role=u.role==='admin'?'user':'admin';DB.setUsers(users);renderAdmin();toast('ROLE UPDATED');}
+async function adminBanUser(id){
+  try{
+    const r=await apiCall('/admin/users/'+id+'/ban',{method:'PATCH'});
+    renderAdmin();toast(r.is_banned?'USER BANNED':'USER UNBANNED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
-function clearClicks(){DB.setClicks([]);renderAdmin();toast('CLICK LOG CLEARED','err');}
-
-function exportData(){
-  const data={users:DB.getUsers(),links:DB.getLinks(),clicks:DB.getClicks(),exported:new Date().toISOString()};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shrinkr_export_'+Date.now()+'.json';a.click();
-  toast('DATA EXPORTED');
+async function adminDeleteLink(id){
+  if(!confirm('DELETE THIS LINK?'))return;
+  try{
+    await apiCall('/admin/links/'+id,{method:'DELETE'});
+    renderAdmin();toast('LINK DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
-function factoryReset(){
-  localStorage.clear();location.reload();
+async function clearClicks(){
+  try{
+    await apiCall('/admin/clicks',{method:'DELETE'});
+    renderAdmin();toast('CLICK LOG CLEARED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function exportData(){
+  try{
+    const res=await fetch(API_BASE+'/admin/export',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const blob=await res.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shrinkr_export_'+Date.now()+'.json';a.click();
+    toast('DATA EXPORTED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function factoryReset(){
+  try{
+    await apiCall('/admin/reset',{method:'DELETE'});
+    toast('FACTORY RESET COMPLETE','err');
+    renderAdmin();
+  }catch(e){toast('ERROR: '+e.message,'err');}
 }
 
 // ────────── UTILS ─────────────────────────────────────────────────
 function fmtDate(ts){
+  if(!ts)return '?';
   return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 }
 function fmtDateTime(ts){
+  if(!ts)return '?';
   return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
 }
 
@@ -1070,48 +1062,9 @@ function toast(msg,type=''){
 }
 
 // ────────── REDIRECT HANDLER ─────────────────────────────────────
-// In a real app this would be server-side. Here we simulate via URL hash.
-function handleRedirect(){
-  const hash=window.location.hash;
-  if(hash.startsWith('#/r/')){
-    const slug=hash.slice(4);
-    const links=DB.getLinks();
-    const link=links.find(l=>l.slug===slug);
-    if(link&&link.active){
-      // Log click
-      logClick(link);
-      window.location.href=link.original;
-    } else {
-      toast('LINK NOT FOUND OR INACTIVE','err');
-    }
-  }
-}
-
-function logClick(link){
-  // Simulate geolocation & device detection
-  const countries=[['Indonesia','ID','🇮🇩','Jakarta'],['United States','US','🇺🇸','Los Angeles'],['Singapore','SG','🇸🇬','Singapore'],['Germany','DE','🇩🇪','Frankfurt']];
-  const c=countries[Math.floor(Math.random()*countries.length)];
-  const browsers=['Chrome','Firefox','Safari','Edge'];
-  const br=browsers[Math.floor(Math.random()*browsers.length)];
-  const isMobile=/Mobi|Android/i.test(navigator.userAgent);
-  const clicks=DB.getClicks();
-  clicks.unshift({
-    id:'c'+Date.now(),linkId:link.id,linkSlug:link.slug,userId:link.userId,
-    ip:'103.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),
-    country:c[0],countryCode:c[1],flag:c[2],city:c[3],
-    isp:'AS7713 PT Telekomunikasi Indonesia',
-    device:isMobile?'Mobile':'Desktop',browser:br,
-    os:navigator.platform||'Unknown',
-    referrer:document.referrer||'direct',
-    ua:navigator.userAgent,ts:Date.now()
-  });
-  DB.setClicks(clicks);
-}
-
 // ────────── INIT ─────────────────────────────────────────────────
-initData();
 initSession();
-handleRedirect();
 </script>
 </body>
 </html>
+
