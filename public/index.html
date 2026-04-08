@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHRINKR // CYBER LINK DIVISION</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #00ff88;
+  --pink: #ff2d78;
+  --cyan: #00eeff;
+  --bg: #050508;
+  --bg2: #080b10;
+  --card: rgba(0,255,136,0.04);
+  --border-g: rgba(0,255,136,0.25);
+  --border-p: rgba(255,45,120,0.25);
+  --border-c: rgba(0,238,255,0.25);
+  --text: #c8d8e8;
+  --dim: rgba(200,216,232,0.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none;min-height:100vh}
+#cursor{width:12px;height:12px;border:1.5px solid var(--green);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s;box-shadow:0 0 8px var(--green)}
+#cursor-trail{width:4px;height:4px;background:var(--pink);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);box-shadow:0 0 6px var(--pink);transition:left .12s ease,top .12s ease}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,0.015) 2px,rgba(0,255,136,0.015) 4px);pointer-events:none;z-index:9990;animation:scanMove 8s linear infinite}
+@keyframes scanMove{0%{background-position:0 0}100%{background-position:0 100px}}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.04) 1px,transparent 1px);background-size:60px 60px;animation:gridPulse 6s ease-in-out infinite;pointer-events:none;z-index:0}
+@keyframes gridPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(30px);opacity:0}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;background:rgba(5,5,8,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-g)}
+.nav-logo{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green);letter-spacing:.15em;text-decoration:none}
+.nav-logo span{color:var(--pink)}
+.nav-links{display:flex;gap:1.5rem;align-items:center}
+.nav-links a{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--dim);text-decoration:none;text-transform:uppercase;transition:color .2s;cursor:none}
+.nav-links a:hover{color:var(--green)}
+.nav-btn{font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:.15em;padding:.35rem .9rem;border:1px solid var(--green);color:var(--green);background:transparent;cursor:none;transition:all .2s;text-transform:uppercase}
+.nav-btn:hover{background:var(--green);color:var(--bg)}
+.nav-btn.pink{border-color:var(--pink);color:var(--pink)}
+.nav-btn.pink:hover{background:var(--pink);color:var(--bg)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.4s step-end infinite;display:inline-block;margin-right:.4rem}
+@keyframes blink{50%{opacity:0}}
+
+/* PAGES */
+.page{display:none;min-height:100vh;padding-top:70px;position:relative;z-index:10}
+.page.active{display:block}
+
+/* LANDING */
+#page-landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:80px 2rem 2rem;text-align:center}
+.hero-tag{font-family:'Share Tech Mono',monospace;font-size:.75rem;letter-spacing:.4em;color:var(--pink);text-shadow:0 0 10px var(--pink);margin-bottom:1rem}
+.hero-name{font-family:'Orbitron',monospace;font-size:clamp(2rem,6vw,4.5rem);font-weight:900;color:var(--green);text-shadow:0 0 30px var(--green),0 0 60px rgba(0,255,136,.4);letter-spacing:.04em;position:relative;margin-bottom:.5rem}
+.hero-name::before,.hero-name::after{content:attr(data-text);position:absolute;top:0;left:0;right:0}
+.hero-name::before{color:var(--pink);animation:glitch1 3s infinite;clip-path:polygon(0 0,100% 0,100% 35%,0 35%)}
+.hero-name::after{clip-path:polygon(0 65%,100% 65%,100% 100%,0 100%);color:var(--cyan);animation:glitch2 3s infinite}
+@keyframes glitch1{0%,94%,100%{transform:none;opacity:0}95%{transform:translate(-3px,1px);opacity:.7}97%{transform:translate(3px,-1px);opacity:.7}}
+@keyframes glitch2{0%,92%,100%{transform:none;opacity:0}93%{transform:translate(3px,1px);opacity:.7}95%{transform:translate(-3px,-1px);opacity:.7}}
+.hero-sub{font-family:'Rajdhani',sans-serif;font-size:1.1rem;color:var(--dim);letter-spacing:.1em;margin-bottom:3rem}
+.hero-sub span{color:var(--cyan)}
+
+/* Short form */
+.shorten-box{width:100%;max-width:680px;background:rgba(0,255,136,0.04);border:1px solid var(--border-g);padding:2rem;position:relative;margin-bottom:2rem}
+.shorten-box::before{content:'[ LINK ENCODER ]';position:absolute;top:-1px;left:1.5rem;font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--green);background:var(--bg);padding:0 .5rem;transform:translateY(-50%)}
+.input-row{display:flex;gap:.5rem}
+.cyber-input{flex:1;background:rgba(0,0,0,.5);border:1px solid var(--border-g);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:.8rem;padding:.6rem 1rem;outline:none;letter-spacing:.05em;transition:border-color .2s}
+.cyber-input:focus{border-color:var(--green);box-shadow:0 0 15px rgba(0,255,136,.15)}
+.cyber-input::placeholder{color:var(--dim)}
+.cyber-btn{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.15em;padding:.6rem 1.4rem;border:1px solid var(--green);color:var(--green);background:transparent;cursor:none;transition:all .2s;white-space:nowrap;text-transform:uppercase}
+.cyber-btn:hover{background:var(--green);color:var(--bg);box-shadow:0 0 20px rgba(0,255,136,.3)}
+.cyber-btn.pink{border-color:var(--pink);color:var(--pink)}
+.cyber-btn.pink:hover{background:var(--pink);color:var(--bg);box-shadow:0 0 20px rgba(255,45,120,.3)}
+.result-box{margin-top:1rem;padding:.8rem 1rem;background:rgba(0,0,0,.4);border-left:3px solid var(--green);display:none}
+.result-box.show{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.result-url{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--green)}
+.copy-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;padding:.3rem .8rem;border:1px solid var(--green);color:var(--green);background:transparent;cursor:none;transition:all .2s;letter-spacing:.1em}
+.copy-btn:hover{background:var(--green);color:var(--bg)}
+.login-hint{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);margin-top:.5rem}
+.login-hint a{color:var(--cyan);cursor:none}
+
+/* STATS ROW */
+.stats-row{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+.stat-card{text-align:center}
+.stat-num{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--green);text-shadow:0 0 15px var(--green)}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--dim)}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;max-width:900px;width:100%;margin:0 auto 3rem}
+.feature-card{background:var(--card);border:1px solid var(--border-g);padding:1.5rem;position:relative;overflow:hidden;transition:border-color .3s}
+.feature-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(0,255,136,.05));pointer-events:none}
+.feature-card:hover{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,.1)}
+.feature-icon{font-size:1.5rem;margin-bottom:.8rem}
+.feature-title{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:var(--green);letter-spacing:.1em;margin-bottom:.5rem}
+.feature-desc{font-size:.85rem;color:var(--dim);line-height:1.5}
+
+/* AUTH MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,5,8,.9);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border-g);padding:2.5rem;width:100%;max-width:440px;position:relative;animation:modalIn .3s ease}
+@keyframes modalIn{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+.modal-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--green);letter-spacing:.15em;margin-bottom:.3rem}
+.modal-sub{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:.1em;margin-bottom:1.8rem}
+.modal-close{position:absolute;top:1rem;right:1rem;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--dim);cursor:none;transition:color .2s}
+.modal-close:hover{color:var(--pink)}
+.form-group{margin-bottom:1.2rem}
+.form-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--dim);display:block;margin-bottom:.4rem;text-transform:uppercase}
+.form-input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border-g);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.8rem;padding:.65rem 1rem;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--green);box-shadow:0 0 10px rgba(0,255,136,.1)}
+.form-submit{width:100%;font-family:'Share Tech Mono',monospace;font-size:.75rem;letter-spacing:.2em;padding:.8rem;border:1px solid var(--green);color:var(--green);background:transparent;cursor:none;transition:all .2s;text-transform:uppercase;margin-top:.5rem}
+.form-submit:hover{background:var(--green);color:var(--bg);box-shadow:0 0 20px rgba(0,255,136,.3)}
+.form-switch{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);text-align:center;margin-top:1rem}
+.form-switch a{color:var(--cyan);cursor:none}
+.alert{font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:.5rem .8rem;margin-bottom:1rem;letter-spacing:.05em}
+.alert-error{border-left:3px solid var(--pink);color:var(--pink);background:rgba(255,45,120,.05)}
+.alert-success{border-left:3px solid var(--green);color:var(--green);background:rgba(0,255,136,.05)}
+
+/* DASHBOARD */
+#page-dashboard{padding:80px 0 2rem}
+.dash-wrap{max-width:1100px;margin:0 auto;padding:0 1.5rem}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+.dash-title{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--green);letter-spacing:.1em}
+.dash-title span{color:var(--dim);font-size:.7rem;font-family:'Share Tech Mono',monospace;display:block;letter-spacing:.2em;margin-top:.2rem}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.dash-stat{background:var(--card);border:1px solid var(--border-g);padding:1.2rem;position:relative}
+.dash-stat-val{font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:700;color:var(--green)}
+.dash-stat-val.pink{color:var(--pink)}
+.dash-stat-val.cyan{color:var(--cyan)}
+.dash-stat-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--dim);margin-top:.3rem}
+.dash-stat-badge{position:absolute;top:.8rem;right:.8rem;font-family:'Share Tech Mono',monospace;font-size:.55rem;padding:.2rem .5rem;border:1px solid var(--border-g);color:var(--dim)}
+
+/* New link form */
+.new-link-box{background:var(--card);border:1px solid var(--border-g);padding:1.5rem;margin-bottom:2rem;position:relative}
+.new-link-box::before{content:'[ NEW LINK ]';position:absolute;top:-1px;left:1.5rem;font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.2em;color:var(--green);background:var(--bg);padding:0 .5rem;transform:translateY(-50%)}
+.new-link-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.slug-input{width:160px}
+
+/* Links table */
+.table-wrap{background:var(--card);border:1px solid var(--border-g);overflow:hidden}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--border-g)}
+.table-title{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:.1em;color:var(--green)}
+.search-input{background:rgba(0,0,0,.4);border:1px solid var(--border-g);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:.4rem .8rem;outline:none;width:200px}
+.search-input:focus{border-color:var(--green)}
+table{width:100%;border-collapse:collapse}
+th{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--dim);text-align:left;padding:.8rem 1rem;border-bottom:1px solid var(--border-g);text-transform:uppercase;background:rgba(0,0,0,.2)}
+td{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text);padding:.8rem 1rem;border-bottom:1px solid rgba(0,255,136,.06);vertical-align:middle}
+tr:hover td{background:rgba(0,255,136,.03)}
+.link-short{color:var(--cyan);cursor:none}
+.link-original{color:var(--dim);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.click-badge{display:inline-block;padding:.15rem .5rem;border:1px solid var(--border-g);color:var(--green);font-size:.65rem}
+.status-active{color:var(--green)}
+.status-inactive{color:var(--pink)}
+.action-btns{display:flex;gap:.4rem}
+.action-btn{font-family:'Share Tech Mono',monospace;font-size:.55rem;padding:.25rem .5rem;border:1px solid;cursor:none;transition:all .2s;letter-spacing:.05em;text-transform:uppercase}
+.action-btn.view{border-color:var(--cyan);color:var(--cyan)}
+.action-btn.view:hover{background:var(--cyan);color:var(--bg)}
+.action-btn.del{border-color:var(--pink);color:var(--pink)}
+.action-btn.del:hover{background:var(--pink);color:var(--bg)}
+.action-btn.toggle{border-color:var(--dim);color:var(--dim)}
+.action-btn.toggle:hover{border-color:var(--green);color:var(--green)}
+.empty-state{text-align:center;padding:3rem;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim)}
+
+/* ANALYTICS MODAL */
+.analytics-modal{max-width:800px;width:95%;max-height:90vh;overflow-y:auto}
+.analytics-modal::-webkit-scrollbar{width:4px}
+.analytics-modal::-webkit-scrollbar-track{background:var(--bg)}
+.analytics-modal::-webkit-scrollbar-thumb{background:var(--green)}
+.section-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.25em;color:var(--dim);text-transform:uppercase;margin:1.5rem 0 .8rem;padding-bottom:.4rem;border-bottom:1px solid var(--border-g)}
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-bottom:1rem}
+.a-stat{background:rgba(0,0,0,.3);border:1px solid var(--border-g);padding:.8rem;text-align:center}
+.a-stat-val{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--cyan)}
+.a-stat-label{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);letter-spacing:.1em}
+
+/* Click log table */
+.click-log{overflow-x:auto}
+.click-log table{min-width:700px}
+.flag{font-size:.9rem}
+.ip-addr{color:var(--green);font-size:.65rem}
+.device-info{color:var(--cyan);font-size:.65rem}
+.loc-info{color:var(--text);font-size:.65rem}
+.time-info{color:var(--dim);font-size:.6rem}
+
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:.4rem}
+.bar-row{display:flex;align-items:center;gap:.8rem}
+.bar-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);width:90px;text-align:right;flex-shrink:0}
+.bar-wrap{flex:1;height:12px;background:rgba(0,0,0,.4);position:relative;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .8s ease;box-shadow:0 0 8px rgba(0,255,136,.4)}
+.bar-fill.pink{background:linear-gradient(90deg,var(--pink),#ff6ba0)}
+.bar-val{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--green);width:30px;flex-shrink:0}
+
+/* ADMIN */
+#page-admin{padding:80px 0 2rem}
+.admin-tabs{display:flex;gap:0;border-bottom:1px solid var(--border-g);margin-bottom:2rem}
+.admin-tab{font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:.15em;padding:.7rem 1.5rem;color:var(--dim);cursor:none;transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent;margin-bottom:-1px}
+.admin-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.admin-tab:hover{color:var(--green)}
+.admin-panel{display:none}
+.admin-panel.active{display:block}
+
+/* Toaster */
+.toast{position:fixed;bottom:2rem;right:2rem;font-family:'Share Tech Mono',monospace;font-size:.7rem;padding:.8rem 1.2rem;border-left:3px solid var(--green);background:var(--bg2);color:var(--green);z-index:9000;animation:toastIn .3s ease;letter-spacing:.05em}
+.toast.err{border-left-color:var(--pink);color:var(--pink)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+/* Responsive */
+@media(max-width:600px){
+  .input-row{flex-direction:column}
+  .new-link-row{flex-direction:column}
+  .nav-links{gap:.8rem}
+  .admin-tabs{overflow-x:auto}
+  td,th{padding:.6rem .5rem;font-size:.6rem}
+}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+<div class="grid-bg"></div>
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('landing')">SHRINKR<span>//.SYS</span></a>
+  <div class="nav-links" id="nav-links">
+    <a href="#" onclick="showPage('landing')" id="nav-home">HOME</a>
+    <a href="#" onclick="showPage('dashboard')" id="nav-dash" style="display:none">DASHBOARD</a>
+    <a href="#" onclick="showPage('admin')" id="nav-admin" style="display:none">ADMIN</a>
+    <button class="nav-btn" onclick="showModal('login')" id="btn-login">LOGIN</button>
+    <button class="nav-btn pink" onclick="showModal('register')" id="btn-register">REGISTER</button>
+    <button class="nav-btn" onclick="logout()" id="btn-logout" style="display:none">LOGOUT</button>
+  </div>
+</nav>
+
+<!-- LANDING PAGE -->
+<div class="page active" id="page-landing">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 70px);padding:2rem;text-align:center">
+    <div class="hero-tag">// CYBER LINK DIVISION // URL SHORTENER //</div>
+    <div class="hero-name" data-text="SHRINKR">SHRINKR</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--dim);letter-spacing:.2em;margin-bottom:.5rem">v2.0 // NEURAL LINK COMPRESSOR</div>
+    <p style="font-family:'Rajdhani',sans-serif;font-size:1.05rem;color:var(--dim);max-width:560px;line-height:1.6;margin-bottom:2.5rem">Compress long URLs into cyber-grade short links. Monitor every click with full <span style="color:var(--cyan)">IP intel</span>, <span style="color:var(--green)">geolocation</span>, and <span style="color:var(--pink)">device fingerprinting</span>.</p>
+
+    <div class="shorten-box" id="landing-shorten-box">
+      <div class="input-row">
+        <input class="cyber-input" id="landing-url" type="url" placeholder="https://your-very-long-url.com/paste-here...">
+        <button class="cyber-btn" onclick="quickShorten()">[ ENCODE ]</button>
+      </div>
+      <div class="result-box" id="landing-result">
+        <span class="result-url" id="landing-result-url"></span>
+        <button class="copy-btn" onclick="copyResult()">[ COPY ]</button>
+      </div>
+      <div class="login-hint">Register to unlock analytics & click tracking → <a href="#" onclick="showModal('register')">CREATE ACCOUNT</a></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-links">0</div>
+        <div class="stat-label">LINKS CREATED</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-clicks">0</div>
+        <div class="stat-label">TOTAL CLICKS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-users">0</div>
+        <div class="stat-label">ACTIVE USERS</div>
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">IP TRACKING</div>
+        <div class="feature-desc">Capture visitor IP addresses with geolocation data including city, region, country, and ISP info.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">DEVICE RECON</div>
+        <div class="feature-desc">Full device fingerprinting: browser, OS, screen resolution, and device type detection.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">REAL-TIME ANALYTICS</div>
+        <div class="feature-desc">Live click monitoring with charts, top referrers, peak hours, and country breakdowns.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">LINK CONTROL</div>
+        <div class="feature-desc">Enable/disable links instantly, set expiry dates, custom slugs and click limits.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">LINK CONTROL CENTER <span id="dash-username-label"></span></div>
+      </div>
+      <button class="cyber-btn" onclick="showModal('newlink')">[ + NEW LINK ]</button>
+    </div>
+
+    <div class="dash-stats" id="dash-stats-row">
+      <div class="dash-stat">
+        <div class="dash-stat-val" id="ds-total-links">0</div>
+        <div class="dash-stat-label">TOTAL LINKS</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-val pink" id="ds-total-clicks">0</div>
+        <div class="dash-stat-label">TOTAL CLICKS</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-val cyan" id="ds-active-links">0</div>
+        <div class="dash-stat-label">ACTIVE LINKS</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-val" id="ds-today-clicks">0</div>
+        <div class="dash-stat-label">TODAY'S CLICKS</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">// LINK DATABASE</div>
+        <input class="search-input" placeholder="Search links..." oninput="filterLinks(this.value)" id="link-search">
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>SHORT LINK</th>
+              <th>ORIGINAL URL</th>
+              <th>CLICKS</th>
+              <th>CREATED</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="links-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="links-empty" style="display:none">// NO LINKS FOUND. CREATE YOUR FIRST LINK.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <div class="dash-title">ADMIN CONTROL PANEL <span style="font-size:.6rem;color:var(--pink)">[ROOT ACCESS]</span></div>
+    </div>
+    <div class="admin-tabs">
+      <div class="admin-tab active" onclick="switchAdminTab('users')">USERS</div>
+      <div class="admin-tab" onclick="switchAdminTab('links')">ALL LINKS</div>
+      <div class="admin-tab" onclick="switchAdminTab('clicks')">CLICK LOG</div>
+      <div class="admin-tab" onclick="switchAdminTab('system')">SYSTEM</div>
+    </div>
+    <div class="admin-panel active" id="admin-users">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">// USER DATABASE</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>USERNAME</th><th>EMAIL</th><th>ROLE</th><th>LINKS</th><th>CREATED</th><th>ACTIONS</th></tr></thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="admin-panel" id="admin-links">
+      <div class="table-wrap">
+        <div class="table-header"><div class="table-title">// ALL LINKS</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>SHORT</th><th>ORIGINAL</th><th>USER</th><th>CLICKS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+            <tbody id="admin-links-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="admin-panel" id="admin-clicks">
+      <div class="table-wrap">
+        <div class="table-header"><div class="table-title">// GLOBAL CLICK LOG</div></div>
+        <div class="click-log">
+          <table>
+            <thead><tr><th>TIME</th><th>LINK</th><th>IP ADDRESS</th><th>LOCATION</th><th>DEVICE</th><th>BROWSER</th><th>REFERRER</th></tr></thead>
+            <tbody id="admin-clicks-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="admin-panel" id="admin-system">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem">
+        <div class="dash-stat"><div class="dash-stat-val" id="sys-users">0</div><div class="dash-stat-label">TOTAL USERS</div></div>
+        <div class="dash-stat"><div class="dash-stat-val pink" id="sys-links">0</div><div class="dash-stat-label">TOTAL LINKS</div></div>
+        <div class="dash-stat"><div class="dash-stat-val cyan" id="sys-clicks">0</div><div class="dash-stat-label">TOTAL CLICKS</div></div>
+        <div class="dash-stat"><div class="dash-stat-val" id="sys-storage">0 KB</div><div class="dash-stat-label">STORAGE USED</div></div>
+        <div class="dash-stat"><div class="dash-stat-val pink" id="sys-bots">0</div><div class="dash-stat-label">BOT CLICKS</div></div>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <button class="cyber-btn pink" onclick="if(confirm('WIPE ALL CLICK DATA?'))clearClicks()">[ CLEAR CLICK LOG ]</button>
+        <button class="cyber-btn" onclick="exportData()">[ EXPORT DATA ]</button>
+        <button class="cyber-btn pink" onclick="if(confirm('FACTORY RESET? THIS CANNOT BE UNDONE!'))factoryReset()">[ FACTORY RESET ]</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('login')">[ × CLOSE ]</div>
+    <div class="modal-title">// AUTHENTICATE</div>
+    <div class="modal-sub">ENTER CREDENTIALS TO ACCESS SYSTEM</div>
+    <div class="alert alert-error" id="login-error" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">USERNAME OR EMAIL</label>
+      <input class="form-input" id="login-user" type="text" placeholder="username_or_email" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PASSWORD</label>
+      <input class="form-input" id="login-pass" type="password" placeholder="••••••••">
+    </div>
+    <button class="form-submit" onclick="doLogin()">[ ACCESS GRANTED → LOGIN ]</button>
+    <div class="form-switch">No account? <a href="#" onclick="closeModal('login');showModal('register')">REGISTER HERE</a></div>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('register')">[ × CLOSE ]</div>
+    <div class="modal-title">// CREATE ACCOUNT</div>
+    <div class="modal-sub">JOIN THE CYBER LINK NETWORK</div>
+    <div class="alert alert-error" id="reg-error" style="display:none"></div>
+    <div class="alert alert-success" id="reg-success" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">USERNAME</label>
+      <input class="form-input" id="reg-user" type="text" placeholder="cyber_username" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">EMAIL</label>
+      <input class="form-input" id="reg-email" type="email" placeholder="user@domain.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PASSWORD</label>
+      <input class="form-input" id="reg-pass" type="password" placeholder="min 6 characters">
+    </div>
+    <div class="form-group">
+      <label class="form-label">CONFIRM PASSWORD</label>
+      <input class="form-input" id="reg-pass2" type="password" placeholder="repeat password">
+    </div>
+    <button class="form-submit" onclick="doRegister()">[ INITIATE REGISTRATION ]</button>
+    <div class="form-switch">Have account? <a href="#" onclick="closeModal('register');showModal('login')">LOGIN HERE</a></div>
+  </div>
+</div>
+
+<!-- NEW LINK MODAL -->
+<div class="modal-overlay" id="modal-newlink">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('newlink')">[ × CLOSE ]</div>
+    <div class="modal-title">// NEW SHORT LINK</div>
+    <div class="modal-sub">ENCODE A NEW URL INTO THE SYSTEM</div>
+    <div class="form-group">
+      <label class="form-label">ORIGINAL URL</label>
+      <input class="form-input" id="nl-url" type="url" placeholder="https://long-url-to-shorten.com/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">CUSTOM SLUG (OPTIONAL)</label>
+      <input class="form-input" id="nl-slug" type="text" placeholder="my-custom-link (leave blank for auto)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">TITLE (OPTIONAL)</label>
+      <input class="form-input" id="nl-title" type="text" placeholder="Descriptive name for this link">
+    </div>
+    <button class="form-submit" onclick="createLink()">[ GENERATE SHORT LINK ]</button>
+  </div>
+</div>
+
+<!-- ANALYTICS MODAL -->
+<div class="modal-overlay" id="modal-analytics">
+  <div class="modal analytics-modal">
+    <div class="modal-close" onclick="closeModal('analytics')">[ × CLOSE ]</div>
+    <div class="modal-title" id="analytics-title">// LINK ANALYTICS</div>
+    <div class="modal-sub" id="analytics-url" style="color:var(--cyan);word-break:break-all"></div>
+
+    <div class="section-label">// PERFORMANCE METRICS</div>
+    <div class="analytics-grid" id="analytics-grid"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem">
+      <div>
+        <div class="section-label">// TOP COUNTRIES</div>
+        <div class="bar-chart" id="chart-countries"></div>
+      </div>
+      <div>
+        <div class="section-label">// DEVICE TYPES</div>
+        <div class="bar-chart" id="chart-devices"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">// TOP BROWSERS</div>
+      <div class="bar-chart" id="chart-browsers" style="flex-direction:row;flex-wrap:wrap;gap:.5rem 1.5rem;display:flex"></div>
+    </div>
+
+    <div class="section-label">// CLICK LOG</div>
+    <div class="click-log">
+      <table>
+        <thead><tr><th>TIME</th><th>IP</th><th>LOCATION</th><th>DEVICE</th><th>BROWSER</th><th>OS</th><th>REFERRER</th></tr></thead>
+        <tbody id="click-log-tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="click-log-empty" style="display:none">// NO CLICKS RECORDED YET.</div>
+  </div>
+</div>
+
+<script>
+// ────────── CONFIG ──────────────────────────────────────────────
+const API_BASE = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('shrinkr_token') || null;
+let USER = null;
+
+// ────────── BOT DETECTION CLIENT-SIDE ──────────────────────────
+const BotDetector = {
+  mouseEvents: 0,
+  keyboardEvents: 0,
+  touchEvents: 0,
+  startTime: Date.now(),
+  
+  init() {
+    document.addEventListener('mousemove', () => this.mouseEvents++);
+    document.addEventListener('click', () => this.mouseEvents++);
+    document.addEventListener('keydown', () => this.keyboardEvents++);
+    document.addEventListener('touchstart', () => this.touchEvents++);
+  },
+  
+  getSignals() {
+    return {
+      mouseEvents: this.mouseEvents,
+      keyboardEvents: this.keyboardEvents,
+      touchEvents: this.touchEvents,
+      timeOnPage: Date.now() - this.startTime,
+      webdriver: navigator.webdriver || false,
+      cookiesEnabled: navigator.cookieEnabled,
+      localStorageEnabled: (() => { try { return !!localStorage; } catch { return false; } })(),
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      plugins: navigator.plugins?.length || 0,
+      languages: navigator.languages?.join(',') || navigator.language,
+    };
+  },
+  
+  getHeaders() {
+    return {
+      'X-Client-Signals': btoa(JSON.stringify(this.getSignals())),
+      'X-Request-Time': Date.now() - this.startTime,
+    };
+  }
+};
+
+BotDetector.init();
+
+// ────────── API HELPERS ──────────────────────────────────────────
+async function apiCall(endpoint, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...BotDetector.getHeaders() };
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  
+  const res = await fetch(API_BASE + endpoint, {
+    ...options,
+    headers: { ...headers, ...options.headers },
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(err.error || 'Request failed');
+  }
+  
+  return res.json();
+}
+
+// ────────── CURSOR ──────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const trail = document.getElementById('cursor-trail');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cursor.style.left=mx+'px';cursor.style.top=my+'px';
+  setTimeout(()=>{trail.style.left=mx+'px';trail.style.top=my+'px';},80);
+});
+
+// ────────── PARTICLES ───────────────────────────────────────────
+const pContainer=document.getElementById('particles');
+const colors=['#00ff88','#ff2d78','#00eeff','#00ff88'];
+for(let i=0;i<35;i++){
+  const p=document.createElement('div');p.className='particle';
+  p.style.left=Math.random()*100+'%';p.style.bottom='-10px';
+  p.style.background=colors[Math.floor(Math.random()*colors.length)];
+  p.style.boxShadow=`0 0 4px ${colors[Math.floor(Math.random()*colors.length)]}`;
+  p.style.animationDuration=(8+Math.random()*15)+'s';
+  p.style.animationDelay=(Math.random()*10)+'s';
+  p.style.opacity=0.3+Math.random()*0.5;
+  p.style.width=p.style.height=(1+Math.random()*2)+'px';
+  pContainer.appendChild(p);
+}
+
+// ────────── SESSION ─────────────────────────────────────────────
+async function initSession(){
+  if(!TOKEN){updateNav();updateLandingStats();return;}
+  try{
+    USER=await apiCall('/auth/me');
+    updateNav();
+    updateLandingStats();
+  }catch{
+    TOKEN=null;localStorage.removeItem('shrinkr_token');
+    updateNav();updateLandingStats();
+  }
+}
+
+// ────────── PAGES ────────────────────────────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(name==='dashboard'){
+    if(!USER){showModal('login');showPage('landing');return;}
+    renderDashboard();
+  }
+  if(name==='admin'){
+    if(!USER||USER.role!=='admin'){toast('ACCESS DENIED: ADMIN ONLY','err');showPage('landing');return;}
+    renderAdmin();
+  }
+  if(name==='landing') updateLandingStats();
+}
+
+// ────────── MODALS ───────────────────────────────────────────────
+function showModal(name){
+  document.getElementById('modal-'+name).classList.add('show');
+}
+function closeModal(name){
+  document.getElementById('modal-'+name).classList.remove('show');
+}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
+});
+
+function updateNav(){
+  const loggedIn=!!USER;
+  document.getElementById('btn-login').style.display=loggedIn?'none':'';
+  document.getElementById('btn-register').style.display=loggedIn?'none':'';
+  document.getElementById('btn-logout').style.display=loggedIn?'':'none';
+  document.getElementById('nav-dash').style.display=loggedIn?'':'none';
+  document.getElementById('nav-admin').style.display=(loggedIn&&USER.role==='admin')?'':'none';
+}
+
+function logout(){
+  TOKEN=null;USER=null;
+  localStorage.removeItem('shrinkr_token');
+  updateNav();showPage('landing');toast('LOGGED OUT SUCCESSFULLY');
+}
+
+// ────────── AUTH ─────────────────────────────────────────────────
+async function doLogin(){
+  const ident=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  if(!ident||!pass){errEl.textContent='ERROR: All fields required.';errEl.style.display='';return;}
+  try{
+    const data=await apiCall('/auth/login',{method:'POST',body:JSON.stringify({username:ident,password:pass})});
+    TOKEN=data.token;USER=data.user;
+    localStorage.setItem('shrinkr_token',TOKEN);
+    updateNav();closeModal('login');
+    toast('ACCESS GRANTED // WELCOME '+USER.username.toUpperCase());
+    showPage('dashboard');
+  }catch(e){
+    errEl.textContent='ERROR: '+e.message;errEl.style.display='';
+  }
+}
+
+async function doRegister(){
+  const username=document.getElementById('reg-user').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  const errEl=document.getElementById('reg-error');
+  const okEl=document.getElementById('reg-success');
+  errEl.style.display='none';okEl.style.display='none';
+  if(!username||!email||!pass||!pass2){errEl.textContent='ERROR: All fields required.';errEl.style.display='';return;}
+  if(pass!==pass2){errEl.textContent='ERROR: Passwords do not match.';errEl.style.display='';return;}
+  try{
+    await apiCall('/auth/register',{method:'POST',body:JSON.stringify({username,email,password:pass})});
+    okEl.textContent='SUCCESS: Account created. Logging you in...';okEl.style.display='';
+    setTimeout(()=>doLogin(),800);
+    document.getElementById('login-user').value=username;
+    document.getElementById('login-pass').value=pass;
+  }catch(e){
+    errEl.textContent='ERROR: '+e.message;errEl.style.display='';
+  }
+}
+// ────────── LANDING QUICK SHORTEN ───────────────────────────────
+async function quickShorten(){
+  const url=document.getElementById('landing-url').value.trim();
+  if(!url){toast('ERROR: Enter a URL','err');return;}
+  try{new URL(url)}catch{toast('ERROR: Invalid URL format','err');return;}
+  try{
+    const data=await apiCall('/links/quick',{method:'POST',body:JSON.stringify({original_url:url})});
+    const resBox=document.getElementById('landing-result');
+    document.getElementById('landing-result-url').textContent=data.short_url;
+    resBox.classList.add('show');
+    resBox.dataset.url=data.short_url;
+    updateLandingStats();
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+function copyResult(){
+  const url=document.getElementById('landing-result').dataset.url;
+  navigator.clipboard.writeText(url).then(()=>toast('COPIED TO CLIPBOARD'));
+}
+
+async function updateLandingStats(){
+  try{
+    const data=await fetch('/api/stats').then(r=>r.json());
+    animCount('stat-links',data.links||0);
+    animCount('stat-clicks',data.clicks||0);
+    animCount('stat-users',data.users||0);
+  }catch{}
+}
+
+function animCount(id,target){
+  const el=document.getElementById(id);
+  if(!el)return;
+  let c=0;const inc=Math.max(1,Math.floor(target/30));
+  const t=setInterval(()=>{
+    c=Math.min(c+inc,target);el.textContent=c;
+    if(c>=target)clearInterval(t);
+  },30);
+}
+
+// ────────── DASHBOARD ────────────────────────────────────────────
+let allLinksCache=[];
+
+async function renderDashboard(){
+  if(!USER)return;
+  document.getElementById('dash-username-label').textContent='// '+USER.username.toUpperCase();
+  try{
+    const links=await apiCall('/links');
+    allLinksCache=links;
+    const totalClicks=links.reduce((s,l)=>s+(l.total_clicks||0),0);
+    const todayClicks=links.reduce((s,l)=>s+(l.today_clicks||0),0);
+    document.getElementById('ds-total-links').textContent=links.length;
+    document.getElementById('ds-total-clicks').textContent=totalClicks;
+    document.getElementById('ds-active-links').textContent=links.filter(l=>l.is_active).length;
+    document.getElementById('ds-today-clicks').textContent=todayClicks;
+    renderLinksTable(links,'links-tbody','links-empty');
+  }catch(e){toast('ERROR loading links: '+e.message,'err');}
+}
+}
+
+function renderLinksTable(links,tbodyId,emptyId){
+  const tbody=document.getElementById(tbodyId);
+  const emptyEl=document.getElementById(emptyId);
+  tbody.innerHTML='';
+  if(!links.length){if(emptyEl)emptyEl.style.display='';tbody.style.display='none';return;}
+  if(emptyEl)emptyEl.style.display='none';
+  tbody.style.display='';
+  links.forEach(link=>{
+    const shortUrl=link.short_url||`${window.location.origin}/r/${link.slug}`;
+    const botPct=link.total_clicks>0?Math.round((link.bot_clicks||0)/link.total_clicks*100):0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><span class="link-short">/r/${link.slug}</span></td>
+      <td><span class="link-original" title="${link.original_url}">${link.original_url}</span></td>
+      <td>
+        <span class="click-badge">${link.total_clicks||0}</span>
+        ${link.bot_clicks>0?`<span style="color:var(--pink);font-size:.55rem;margin-left:.3rem">🤖${link.bot_clicks}</span>`:''}
+        ${link.human_clicks>0?`<span style="color:var(--green);font-size:.55rem;margin-left:.2rem">👤${link.human_clicks}</span>`:''}
+      </td>
+      <td style="color:var(--dim);font-size:.65rem">${fmtDate(link.created_at)}</td>
+      <td><span class="${link.is_active?'status-active':'status-inactive'}">${link.is_active?'● ACTIVE':'○ OFF'}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="action-btn view" onclick="showAnalytics(${link.id})">STATS</button>
+          <button class="action-btn toggle" onclick="toggleLink(${link.id})">TOGGLE</button>
+          <button class="action-btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="copyShort('${shortUrl}')">COPY</button>
+          <button class="action-btn del" onclick="deleteLink(${link.id})">DEL</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterLinks(q){
+  const filtered=allLinksCache.filter(l=>l.slug.includes(q)||l.original_url.includes(q)||(l.title||'').includes(q));
+  renderLinksTable(filtered,'links-tbody','links-empty');
+}
+
+function copyShort(url){
+  navigator.clipboard.writeText(url).then(()=>toast('COPIED: '+url));
+}
+
+async function toggleLink(id){
+  try{
+    await apiCall('/links/'+id+'/toggle',{method:'PATCH'});
+    renderDashboard();toast('LINK STATUS UPDATED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function deleteLink(id){
+  if(!confirm('DELETE THIS LINK? This cannot be undone.'))return;
+  try{
+    await apiCall('/links/'+id,{method:'DELETE'});
+    renderDashboard();toast('LINK DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+// ────────── CREATE LINK ──────────────────────────────────────────
+async function createLink(){
+  const url=document.getElementById('nl-url').value.trim();
+  const slug=document.getElementById('nl-slug').value.trim();
+  const title=document.getElementById('nl-title').value.trim();
+  if(!url){toast('ERROR: URL required','err');return;}
+  try{new URL(url)}catch{toast('ERROR: Invalid URL','err');return;}
+  try{
+    const data=await apiCall('/links',{method:'POST',body:JSON.stringify({original_url:url,slug:slug||undefined,title:title||undefined})});
+    document.getElementById('nl-url').value='';document.getElementById('nl-slug').value='';document.getElementById('nl-title').value='';
+    closeModal('newlink');
+    renderDashboard();
+    toast('LINK CREATED: '+data.short_url);
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+// ────────── ANALYTICS ────────────────────────────────────────────
+async function showAnalytics(linkId){
+  try{
+    const data=await apiCall('/links/'+linkId+'/analytics');
+    const {link,stats,topCountries,topBrowsers,topOS,devices,byHour,topReferrers,recentClicks}=data;
+
+    document.getElementById('analytics-title').textContent='// ANALYTICS: '+link.slug.toUpperCase();
+    document.getElementById('analytics-url').textContent=link.original_url;
+
+    // Bot vs Human info
+    const botPct=stats.total>0?Math.round(stats.bots/stats.total*100):0;
+    document.getElementById('analytics-grid').innerHTML=`
+      <div class="a-stat"><div class="a-stat-val">${stats.total}</div><div class="a-stat-label">TOTAL CLICKS</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--green)">${stats.human}</div><div class="a-stat-label">👤 HUMAN</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--pink)">${stats.bots}</div><div class="a-stat-label">🤖 BOT (${botPct}%)</div></div>
+      <div class="a-stat"><div class="a-stat-val" style="color:var(--cyan)">${stats.unique_ips}</div><div class="a-stat-label">UNIQUE IPs</div></div>
+      <div class="a-stat"><div class="a-stat-val">${stats.today}</div><div class="a-stat-label">TODAY</div></div>`;
+
+    renderBarChart('chart-countries',topCountries,10);
+    renderBarChart('chart-devices',Object.entries(devices).sort((a,b)=>b[1]-a[1]),4,'pink');
+    renderBarChart('chart-browsers',topBrowsers,5);
+
+    // Click log
+    const tbody=document.getElementById('click-log-tbody');
+    const emptyEl=document.getElementById('click-log-empty');
+    tbody.innerHTML='';
+    if(!recentClicks.length){emptyEl.style.display='';tbody.style.display='none';}
+    else{
+      emptyEl.style.display='none';tbody.style.display='';
+      recentClicks.forEach(c=>{
+        const botBadge=c.is_bot?`<span style="color:var(--pink);font-size:.55rem"> 🤖BOT</span>`:`<span style="color:var(--green);font-size:.55rem"> 👤${Math.round(c.human_score||0)}%</span>`;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td class="time-info">${fmtDateTime(c.clicked_at)}</td>
+          <td class="ip-addr">${c.ip}${botBadge}</td>
+          <td><span class="loc-info">${c.city||'?'}, ${c.country||'?'}</span><br><span style="color:var(--dim);font-size:.58rem">${c.isp||''}</span></td>
+          <td class="device-info">${c.device||'?'}</td>
+          <td class="device-info">${c.browser||'?'}</td>
+          <td style="color:var(--dim);font-size:.65rem">${c.os||'?'}</td>
+          <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    showModal('analytics');
+  }catch(e){toast('ERROR loading analytics: '+e.message,'err');}
+}
+
+function countGroup(arr,key){
+  const map={};
+  arr.forEach(i=>{const v=i[key]||'Unknown';map[v]=(map[v]||0)+1;});
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderBarChart(id,data,max,color=''){
+  const el=document.getElementById(id);el.innerHTML='';
+  const maxVal=data[0]?data[0][1]:1;
+  data.slice(0,max).forEach(([label,val])=>{
+    const pct=(val/maxVal*100).toFixed(0);
+    el.innerHTML+=`<div class="bar-row">
+      <div class="bar-label">${label.slice(0,12)}</div>
+      <div class="bar-wrap"><div class="bar-fill ${color}" style="width:${pct}%"></div></div>
+      <div class="bar-val">${val}</div>
+    </div>`;
+  });
+  if(!data.length)el.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:.6rem;color:var(--dim)">NO DATA</div>';
+}
+
+// ────────── ADMIN ─────────────────────────────────────────────────
+async function renderAdmin(){
+  await Promise.all([renderAdminUsers(),renderAdminLinks(),renderAdminClicks(),renderAdminSystem()]);
+}
+
+async function renderAdminUsers(){
+  try{
+    const users=await apiCall('/admin/users');
+    const tbody=document.getElementById('admin-users-tbody');
+    tbody.innerHTML='';
+    users.forEach(u=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td style="color:var(--green)">${u.username}${u.is_banned?'<span style="color:var(--pink);font-size:.55rem"> [BANNED]</span>':''}</td>
+        <td style="color:var(--dim)">${u.email}</td>
+        <td><span style="color:${u.role==='admin'?'var(--pink)':'var(--cyan)'}">[ ${u.role.toUpperCase()} ]</span></td>
+        <td><span class="click-badge">${u.link_count||0}</span></td>
+        <td style="color:var(--dim);font-size:.65rem">${fmtDate(u.created_at)}</td>
+        <td>
+          <div class="action-btns">
+            ${u.role!=='admin'?`<button class="action-btn del" onclick="adminDeleteUser(${u.id})">DEL</button>`:'<span style="font-size:.6rem;color:var(--dim)">ROOT</span>'}
+            ${u.role!=='admin'?`<button class="action-btn toggle" onclick="adminBanUser(${u.id})">${u.is_banned?'UNBAN':'BAN'}</button>`:''}
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
+}
+
+async function renderAdminLinks(){
+  try{
+    const links=await apiCall('/admin/links');
+    const tbody=document.getElementById('admin-links-tbody');
+    tbody.innerHTML='';
+    links.forEach(link=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="link-short">/${link.slug}</td>
+        <td><span class="link-original" title="${link.original_url}">${link.original_url}</span></td>
+        <td style="color:var(--cyan)">${link.username||'anon'}</td>
+        <td><span class="click-badge">${link.total_clicks||0}</span>${link.bot_clicks>0?`<span style="color:var(--pink);font-size:.55rem"> 🤖${link.bot_clicks}</span>`:''}</td>
+        <td><span class="${link.is_active?'status-active':'status-inactive'}">${link.is_active?'ACTIVE':'OFF'}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" onclick="showAnalytics(${link.id})">STATS</button>
+            <button class="action-btn del" onclick="adminDeleteLink(${link.id})">DEL</button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
+}
+
+async function renderAdminClicks(){
+  try{
+    const clicks=await apiCall('/admin/clicks');
+    const tbody=document.getElementById('admin-clicks-tbody');
+    tbody.innerHTML='';
+    clicks.slice(0,200).forEach(c=>{
+      const botBadge=c.is_bot?`<span style="color:var(--pink);font-size:.55rem"> 🤖</span>`:`<span style="color:var(--green);font-size:.55rem"> 👤</span>`;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="time-info">${fmtDateTime(c.clicked_at)}</td>
+        <td class="link-short">/${c.slug}</td>
+        <td class="ip-addr">${c.ip}${botBadge}</td>
+        <td>${c.city||'?'}, ${c.country||'?'}</td>
+        <td class="device-info">${c.device||'?'}</td>
+        <td style="color:var(--cyan);font-size:.65rem">${c.browser||'?'}</td>
+        <td style="color:var(--dim);font-size:.62rem">${c.referrer||'direct'}</td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){console.error(e);}
+}
+
+async function renderAdminSystem(){
+  try{
+    const s=await apiCall('/admin/stats');
+    document.getElementById('sys-users').textContent=s.users;
+    document.getElementById('sys-links').textContent=s.links;
+    document.getElementById('sys-clicks').textContent=s.clicks;
+    document.getElementById('sys-storage').textContent='DB';
+    // Add bot stats if elements exist
+    const botEl=document.getElementById('sys-bots');
+    if(botEl)botEl.textContent=s.bots+' ('+Math.round(s.bots/(s.clicks||1)*100)+'%)';
+  }catch(e){console.error(e);}
+}
+
+function switchAdminTab(name){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('admin-'+name).classList.add('active');
+}
+
+async function adminDeleteUser(id){
+  if(!confirm('DELETE USER AND ALL THEIR DATA?'))return;
+  try{
+    await apiCall('/admin/users/'+id,{method:'DELETE'});
+    renderAdmin();toast('USER DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function adminBanUser(id){
+  try{
+    const r=await apiCall('/admin/users/'+id+'/ban',{method:'PATCH'});
+    renderAdmin();toast(r.is_banned?'USER BANNED':'USER UNBANNED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function adminDeleteLink(id){
+  if(!confirm('DELETE THIS LINK?'))return;
+  try{
+    await apiCall('/admin/links/'+id,{method:'DELETE'});
+    renderAdmin();toast('LINK DELETED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function clearClicks(){
+  try{
+    await apiCall('/admin/clicks',{method:'DELETE'});
+    renderAdmin();toast('CLICK LOG CLEARED','err');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function exportData(){
+  try{
+    const res=await fetch(API_BASE+'/admin/export',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const blob=await res.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='shrinkr_export_'+Date.now()+'.json';a.click();
+    toast('DATA EXPORTED');
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+async function factoryReset(){
+  try{
+    await apiCall('/admin/reset',{method:'DELETE'});
+    toast('FACTORY RESET COMPLETE','err');
+    renderAdmin();
+  }catch(e){toast('ERROR: '+e.message,'err');}
+}
+
+// ────────── UTILS ─────────────────────────────────────────────────
+function fmtDate(ts){
+  if(!ts)return '?';
+  return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtDateTime(ts){
+  if(!ts)return '?';
+  return new Date(ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function toast(msg,type=''){
+  const t=document.createElement('div');
+  t.className='toast '+(type==='err'?'err':'');
+  t.textContent=(type==='err'?'⚠ ':'✓ ')+msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3000);
+}
+
+// ────────── REDIRECT HANDLER ─────────────────────────────────────
+// ────────── INIT ─────────────────────────────────────────────────
+initSession();
+</script>
+</body>
+</html>
+
